@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface LandingToken {
+interface LendingToken {
     function mint(address account, uint256 amount) external;
 
     function burn(address account, uint256 amount) external;
@@ -11,7 +11,7 @@ interface LandingToken {
     function balanceOf(address account) external returns (uint256);
 }
 
-contract LandingContracts is Ownable {
+contract LendingContracts is Ownable {
     uint256 public immutable borrowRatio;
     uint256 public immutable minDuration;
     uint256 public immutable maxDuration;
@@ -19,7 +19,7 @@ contract LandingContracts is Ownable {
     uint256 public immutable minFee;
     uint256 public immutable overdraftPercentDuration; // 50% allowed overdraft as base
     uint256 public immutable overdraftFee; // additional fee each day
-    LandingToken public immutable token;
+    LendingToken public immutable token;
 
     uint256 totalFees;
     uint256 totalOverdraft;
@@ -50,7 +50,7 @@ contract LandingContracts is Ownable {
         uint256 _minFee,
         uint256 _overdraftPercentDuration,
         uint256 _overdraftFee,
-        LandingToken _token
+        LendingToken _token
     ) {
         borrowRatio = _borrowRatio;
         minDuration = _minDuration;
