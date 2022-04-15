@@ -129,7 +129,7 @@ contract LendingContracts is Ownable {
         }
         uint256 _overdraftFee = 0;
         if (customers[msg.sender].untilTime < block.timestamp) {
-            _overdraftFee = overdraftFee * ((block.timestamp - customers[msg.sender].untilTime) / (24 * 3600));
+            _overdraftFee = overdraftFee * ((block.timestamp - customers[msg.sender].untilTime) / uint(24 * 3600));
 
             if (_overdraftFee > customers[msg.sender].eth)  {
                 totalOverdraft += customers[msg.sender].eth;
