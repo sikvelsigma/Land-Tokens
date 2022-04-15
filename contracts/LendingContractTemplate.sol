@@ -13,7 +13,7 @@ interface ILendingToken {
     function transferOwnership(address newOwner) external;
 }
 
-contract LendingContractsTemplate is Ownable {
+contract LendingContractTemplate is Ownable {
     constructor(
         uint256 _borrowRatio,
         uint256 _minDuration,

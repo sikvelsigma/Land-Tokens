@@ -15,7 +15,7 @@ interface ILendingToken {
     function owner() external view returns (address);
 }
 
-contract LendingContracts is Ownable {
+contract LendingContract is Ownable {
     uint256 public immutable borrowRatio;
     uint256 public immutable minDuration;
     uint256 public immutable maxDuration;
