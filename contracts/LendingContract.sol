@@ -8,7 +8,9 @@ interface LendingToken {
 
     function burn(address account, uint256 amount) external;
 
-    function balanceOf(address account) external returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+
+    function transferOwnership(address newOwner) external;
 }
 
 contract LendingContracts is Ownable {
@@ -26,6 +28,7 @@ contract LendingContracts is Ownable {
 
     struct Customer {
         uint256 amount;
+        uint256 eth;
         uint256 fee;
         uint256 duration;
         bool active;
@@ -60,16 +63,14 @@ contract LendingContracts is Ownable {
         overdraftPercentDuration = _overdraftPercentDuration;
         overdraftFee = _overdraftFee;
         token = _token;
+        _token.transferOwnership(address(this));
     }
 
-    function borrowTokens(uint256 _amount, uint256 _duration)
-        external
-        payable
-        notActive
-    {
-        require(msg.value > minFee, "ETH amount too small");
-        customers[msg.sender].amount = _amount;
-        customers[msg.sender].amount = minFee;
+    function borrowTokens(uint256 _duration) external payable notActive {
+        require(msg.value > minFee, "ETH_AMOUNT_TOO_SMALL");
+        customers[msg.sender].amount = msg.value * borrowRatio;
+        customers[msg.sender].eth = msg.value - minFee;
+        customers[msg.sender].fee = minFee;
         customers[msg.sender].duration = _duration;
         customers[msg.sender].active = true;
         token.mint(msg.sender, msg.value * borrowRatio);
