@@ -191,9 +191,8 @@ contract LendingContracts is Ownable {
                 continue;
             } else if (customers[_customer].id == 0) {
                 continue;
-            }
-            else if (customers[_customer].state == UserState.RETURNED ||
-                     customers[_customer].untilTime >= block.timestamp) {
+            } else if (customers[_customer].state == UserState.RETURNED ||
+                       customers[_customer].untilTime >= block.timestamp) {
                 _reduceIds = false;
                 continue;
             }  else if (customers[_customer].state == UserState.BORROWED &&
