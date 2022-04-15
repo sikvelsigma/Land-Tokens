@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface LendingToken {
+interface ILendingToken {
     function mint(address account, uint256 amount) external;
 
     function burn(address account, uint256 amount) external;
@@ -22,7 +22,7 @@ contract LendingContractsTemplate is Ownable {
         uint256 _minFee,
         uint256 _overdraftPercentDuration,
         uint256 _overdraftFee,
-        LendingToken _token
+        ILendingToken _token
     ) {}
 
     function borrowTokens(uint256 _durationDays) external payable {}
