@@ -11,6 +11,8 @@ interface ILendingToken {
     function balanceOf(address account) external view returns (uint256);
 
     function transferOwnership(address newOwner) external;
+
+    function owner() external view returns (address);
 }
 
 contract LendingContracts is Ownable {
@@ -21,7 +23,7 @@ contract LendingContracts is Ownable {
     uint256 public immutable minFee;
     uint256 public immutable overdraftPercentDuration; // 50% allowed overdraft as base
     uint256 public immutable overdraftFee; // additional fee each day
-    ILendingToken public immutable token;
+    ILendingToken token;
 
     uint256 totalFees;
     uint256 totalOverdraft;
@@ -38,8 +40,9 @@ contract LendingContracts is Ownable {
     }
 
     mapping(address => Customer) customers;
-    mapping(uint => address) idToAddress;
-    uint totalIds = 0;
+    mapping(uint256 => address) idToAddress;
+    uint256 totalIds = 0;
+    uint256 lowerId = 1;
 
     modifier onlyInitial() {
         require(customers[msg.sender].state == UserState.INITIAL, "CANNOT_BORROW_TWICE");
@@ -50,7 +53,11 @@ contract LendingContracts is Ownable {
         _;
     }
     modifier onlyReturned() {
-        require(customers[msg.sender].state == UserState.RETURNED, "TOKENS_NOT_RETURNED");
+        require(customers[msg.sender].state == UserState.RETURNED, "ONLY_AFTER_TOKENS_RETURN");
+        _;
+    }
+    modifier tokenSet() {
+        require(address(token) != address(0), "TOKEN_CONTRACT_NOT_SET");
         _;
     }
 
@@ -62,6 +69,7 @@ contract LendingContracts is Ownable {
     event EthReturnedSuccess(address _customer, uint _amount);
     event EthOwnerWithdraw(uint _amount);
     event OverdraftOwnerWithdraw(uint _amount);
+    event OverdraftFeeUpdated(uint _amount);
 
     constructor(
         uint256 _borrowRatio,
@@ -70,8 +78,8 @@ contract LendingContracts is Ownable {
         uint256 _maxFee,
         uint256 _minFee,
         uint256 _overdraftPercentDuration,
-        uint256 _overdraftFee,
-        ILendingToken _token
+        uint256 _overdraftFee
+        // ILendingToken _token
     ) {
         require(_maxDuration > _minDuration, "MIN_DURATION_BIGGER_THAN_MAX");
         require(_minDuration > 0, "MIN_DURATION_ZERO");
@@ -87,24 +95,29 @@ contract LendingContracts is Ownable {
         minFee = _minFee;
         overdraftPercentDuration = _overdraftPercentDuration;
         overdraftFee = _overdraftFee;
-        token = _token;
+        // token = _token;
         // _token.transferOwnership(address(this));
     }
 
-    function borrowTokens(uint256 _durationDays) external payable onlyInitial {
+    function setToken (ILendingToken _token) external onlyOwner {
+        require(address(token) == address(0), "TOKEN_ALREADY_SET");
+        require(address(this) == _token.owner(), "INCORRECT_TOKEN_OWNER");
+        token = _token;
+    }
+
+    function borrowTokens(uint256 _durationDays) external payable tokenSet onlyInitial {
         require(msg.value > minFee, "ETH_AMOUNT_TOO_SMALL");
         require(_durationDays >= minDuration, "DURATION_TOO_SMALL");
         require(_durationDays <= maxDuration, "DURATION_TOO_LARGE");
 
         uint256 _fee = minFee +
-            ((_durationDays - minDuration) / (maxDuration - minDuration)) *
-            (maxFee - minFee);
+            (_durationDays - minDuration) / (maxDuration - minDuration) * (maxFee - minFee);
 
         customers[msg.sender].amount = msg.value * borrowRatio;
         customers[msg.sender].eth = msg.value - _fee;
-        customers[msg.sender].untilTime = block.timestamp + _durationDays * 24 * 3600;
+        customers[msg.sender].untilTime = block.timestamp + _durationDays * 1 days;
         customers[msg.sender].state = UserState.BORROWED;
-        customers[msg.sender].overdraftTime = block.timestamp + (_durationDays * (100 + overdraftPercentDuration) / 100) * 24 * 3600;
+        customers[msg.sender].overdraftTime = block.timestamp + (_durationDays * (100 + overdraftPercentDuration) / 100) * 1 days;
 
         totalIds++;
         customers[msg.sender].id = totalIds ;
@@ -115,27 +128,23 @@ contract LendingContracts is Ownable {
         emit TokensBorrowed(msg.sender, customers[msg.sender].amount, _durationDays);
     }
 
-    function returnTokens() external onlyBorrowed {
+    function returnTokens() external tokenSet onlyBorrowed {
         uint256 _balance = token.balanceOf(msg.sender);
         require(_balance >= customers[msg.sender].amount, "NOT_ENOUGH_TOKENS_TO_RETURN");
         if (block.timestamp > customers[msg.sender].overdraftTime) {
             totalOverdraft += customers[msg.sender].eth;
-            if (customers[msg.sender].id == totalIds) {
-                totalIds--;
-            }
+            _trimCustomerMap(msg.sender);
             delete customers[msg.sender];
             emit OverdraftExpired(msg.sender);
             return;
         }
         uint256 _overdraftFee = 0;
-        if (customers[msg.sender].untilTime < block.timestamp) {
-            _overdraftFee = overdraftFee * ((block.timestamp - customers[msg.sender].untilTime) / uint(24 * 3600));
+        if (block.timestamp > customers[msg.sender].untilTime) {
+            _overdraftFee = overdraftFee * uint((block.timestamp - customers[msg.sender].untilTime) / 1 days);
 
             if (_overdraftFee > customers[msg.sender].eth)  {
                 totalOverdraft += customers[msg.sender].eth;
-                if (customers[msg.sender].id == totalIds) {
-                    totalIds--;
-                }
+                _trimCustomerMap(msg.sender);
                 delete customers[msg.sender];
                 emit NotEnoughEthForOverdraft(msg.sender);
                 return;
@@ -150,17 +159,24 @@ contract LendingContracts is Ownable {
         emit TokensReturnSuccess(msg.sender, customers[msg.sender].amount);
     }
 
-    function withdrawEth() external onlyReturned {
+    function withdrawEth() external tokenSet onlyReturned {
+        require(block.timestamp > customers[msg.sender].untilTime, "REQUIRED_TIME_NOT_PASSED");
         address payable _customer = payable(msg.sender);
         _customer.transfer(customers[msg.sender].eth);
         emit EthReturnedSuccess(msg.sender, customers[msg.sender].eth);
-        if (customers[msg.sender].id == totalIds) {
-            totalIds--;
-        }
+        _trimCustomerMap(msg.sender);
         delete customers[msg.sender];
     }
 
-    function withdrawFeeContractEth() external onlyOwner {
+    function _trimCustomerMap(address _customer) internal {
+        if (customers[_customer].id == totalIds) {
+            totalIds--;
+        } else if (customers[_customer].id == lowerId) {
+            lowerId++;
+        }
+    }
+
+    function withdrawFeeContractEth() external tokenSet onlyOwner {
         address payable _owner = payable(owner());
         require(totalFees > 0, "NO_FEE_TO_WITHDRAW");
 
@@ -169,7 +185,7 @@ contract LendingContracts is Ownable {
         totalFees = 0;
     }
 
-    function withdrawOverdraftContractEth() external onlyOwner {
+    function withdrawOverdraftContractEth() external tokenSet onlyOwner {
         address payable _owner = payable(owner());
         require(totalOverdraft > 0, "NO_OVERDRAFT_TO_WITHDRAW");
         require(token.balanceOf(_owner) >= totalOverdraft * borrowRatio, "NOT_ENOUGH_TOKENS_TO_BURN");
@@ -180,14 +196,35 @@ contract LendingContracts is Ownable {
         totalOverdraft = 0;
     }
 
-    function calculateOverdraft() external onlyOwner {
+    function calculateOverdraft() external tokenSet onlyOwner {
         address _customer;
-        uint256 _newtotalIds = totalIds;
+        uint256 _newTotalIds = totalIds;
+        uint256 _newLowerId = lowerId;
         bool _reduceIds = true;
-        for (uint i = totalIds; i >= 1; i--) {
+        for (uint i = lowerId; i <= totalIds; i++) {
+            _customer = idToAddress[i];
+            if (customers[_customer].id == 0) {
+                _newLowerId++;
+                continue;
+            } else if (customers[_customer].state == UserState.RETURNED ||
+                       customers[_customer].untilTime >= block.timestamp) {
+                break;
+            }  else if (customers[_customer].state == UserState.BORROWED &&
+                        customers[_customer].overdraftTime < block.timestamp) {
+                totalOverdraft += customers[_customer].eth;
+                emit OverdraftExpired(_customer);
+                delete customers[_customer];
+                _newLowerId++;
+
+            } else {
+                break;
+            }
+        }
+        lowerId = _newLowerId;
+        for (uint i = totalIds; i > lowerId; i--) {
             _customer = idToAddress[i];
             if (customers[_customer].id == 0 && _reduceIds == true) {
-                _newtotalIds--;
+                _newTotalIds--;
                 continue;
             } else if (customers[_customer].id == 0) {
                 continue;
@@ -196,15 +233,18 @@ contract LendingContracts is Ownable {
                 _reduceIds = false;
                 continue;
             }  else if (customers[_customer].state == UserState.BORROWED &&
-                        block.timestamp > customers[_customer].overdraftTime) {
+                        customers[_customer].overdraftTime < block.timestamp) {
                 totalOverdraft += customers[_customer].eth;
                 emit OverdraftExpired(_customer);
                 delete customers[_customer];
                 if (_reduceIds == true) {
-                    _newtotalIds--;
+                    _newTotalIds--;
                 }
+            } else {
+                _reduceIds = false;
             }
         }
-        totalIds = _newtotalIds;
+        totalIds = _newTotalIds;
+        emit OverdraftFeeUpdated(totalOverdraft);
     }
 }
