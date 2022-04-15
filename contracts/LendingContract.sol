@@ -30,7 +30,7 @@ contract LendingContracts is Ownable {
         uint256 amount;
         uint256 eth;
         uint256 fee;
-        uint256 duration;
+        uint256 untilTime;
         bool active;
     }
 
@@ -55,6 +55,13 @@ contract LendingContracts is Ownable {
         uint256 _overdraftFee,
         LendingToken _token
     ) {
+        require(_maxDuration > _minDuration, "MIN_DURATION_BIGGER_THAN_MAX");
+        require(_minDuration > 0, "MIN_DURATION_ZERO");
+        require(_borrowRatio > 0, "RATIO_ZERO");
+        require(_maxFee > _minFee, "MIN_FEE_BIGGER_THAN_MAX");
+        require(_overdraftPercentDuration <= 100, "OVERDRAFT_DURATION_TOO_LARGE");
+        require(_overdraftFee > 0, "OVERDRAFT_FEE_ZERO");
+
         borrowRatio = _borrowRatio;
         minDuration = _minDuration;
         maxDuration = _maxDuration;
@@ -66,12 +73,15 @@ contract LendingContracts is Ownable {
         _token.transferOwnership(address(this));
     }
 
-    function borrowTokens(uint256 _duration) external payable notActive {
+    function borrowTokens(uint256 _durationDays) external payable notActive {
         require(msg.value > minFee, "ETH_AMOUNT_TOO_SMALL");
+        require(_durationDays >= minDuration, "DURATION_TOO_SMALL");
+        require(_durationDays <= maxDuration, "DURATION_TOO_LARGE");
+
         customers[msg.sender].amount = msg.value * borrowRatio;
         customers[msg.sender].eth = msg.value - minFee;
         customers[msg.sender].fee = minFee;
-        customers[msg.sender].duration = _duration;
+        customers[msg.sender].untilTime = block.timestamp + _durationDays * 24 * 3600;
         customers[msg.sender].active = true;
         token.mint(msg.sender, msg.value * borrowRatio);
         totalFees += minFee;
