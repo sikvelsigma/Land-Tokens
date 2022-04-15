@@ -33,6 +33,7 @@ contract LendingContracts is Ownable {
         uint256 amount;
         uint256 eth;
         uint256 untilTime;
+        uint256 overdraftTime;
         UserState state;
     }
 
@@ -103,6 +104,7 @@ contract LendingContracts is Ownable {
         customers[msg.sender].eth = msg.value - _fee;
         customers[msg.sender].untilTime = block.timestamp + _durationDays * 24 * 3600;
         customers[msg.sender].state = UserState.BORROWED;
+        customers[msg.sender].overdraftTime = block.timestamp + (_durationDays * (100 + overdraftPercentDuration) / 100) * 24 * 3600;
 
         totalIds++;
         customers[msg.sender].id = totalIds ;
@@ -116,7 +118,7 @@ contract LendingContracts is Ownable {
     function returnTokens() external onlyBorrowed {
         uint256 _balance = token.balanceOf(msg.sender);
         require(_balance >= customers[msg.sender].amount, "NOT_ENOUGH_TOKENS_TO_RETURN");
-        if (block.timestamp > customers[msg.sender].untilTime * (100 + overdraftPercentDuration) / 100) {
+        if (block.timestamp > customers[msg.sender].overdraftTime) {
             totalOverdraft += customers[msg.sender].eth;
             if (customers[msg.sender].id == totalIds) {
                 totalIds--;
@@ -187,15 +189,15 @@ contract LendingContracts is Ownable {
             if (customers[_customer].id == 0 && _reduceIds == true) {
                 _newtotalIds--;
                 continue;
-            } else if (customers[_customer].state == UserState.RETURNED){
+            } else if (customers[_customer].id == 0) {
+                continue;
+            }
+            else if (customers[_customer].state == UserState.RETURNED ||
+                     customers[_customer].untilTime >= block.timestamp) {
                 _reduceIds = false;
                 continue;
-            } else if (customers[_customer].untilTime >= block.timestamp){
-                _reduceIds = false;
-                continue;
-            } else if (block.timestamp > customers[_customer].untilTime * (100 + overdraftPercentDuration) / 100 &&
-                        customers[_customer].state == UserState.BORROWED) {
-
+            }  else if (customers[_customer].state == UserState.BORROWED &&
+                        block.timestamp > customers[_customer].overdraftTime) {
                 totalOverdraft += customers[_customer].eth;
                 emit OverdraftExpired(_customer);
                 delete customers[_customer];
