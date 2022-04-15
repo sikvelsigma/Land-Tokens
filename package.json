@@ -1,19 +1,19 @@
 {
-  "name": "merkle_tree_trans_js",
+  "name": "land-tokens",
   "version": "1.0.0",
   "description": "Currently work-in-progress",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sikvelsigma/Merkle_Tree_Trans_JS.git"
+    "url": "git+https://github.com/sikvelsigma/Land-Tokens.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sikvelsigma/Merkle_Tree_Trans_JS/issues"
+    "url": "https://github.com/sikvelsigma/Land-Tokens/issues"
   },
-  "homepage": "https://github.com/sikvelsigma/Merkle_Tree_Trans_JS#readme",
+  "homepage": "https://github.com/sikvelsigma/Land-Tokens#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
