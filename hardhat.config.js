@@ -34,13 +34,18 @@ module.exports = {
     local: {
       chainId: 1337,
       url: "http://127.0.0.1:7545",
-      accounts: ["cf094bf165c10b02a8fadf63ff34285cb10b79492ff3991b4095c4429ff275fa"],
+      accounts: [
+        "fa8c9fb50563b6ded7f45451fdf211b05be24e518f5dba6d621be367f87672f8",
+        "ca7c58b1e83d0276db22f44c01cba942813ec0c1eceb872d2cecf06b06dd0c41",
+        "8f1d9afa5aa1889248f754fbc585aaea8a2cee49ab8b50197a13c02ab113447c",
+        "aa9b865602c5c75fa31fc5d3412158abddefcb1a7309a827cc9afaa5ad3d4253"
+      ],
     }
   },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD"
-  },
+  // gasReporter: {
+  //   enabled: process.env.REPORT_GAS !== undefined,
+  //   currency: "USD"
+  // },
   etherscan: {
     apiKey: ETHERSCAN_KEY
   },

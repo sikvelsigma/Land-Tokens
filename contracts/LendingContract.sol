@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 interface ILendingToken {
     function mint(address account, uint256 amount) external;
@@ -15,7 +17,7 @@ interface ILendingToken {
     function owner() external view returns (address);
 }
 
-contract LendingContract is Ownable {
+contract LendingContract is Ownable, ReentrancyGuard {
     uint256 public immutable borrowRatio;
     uint256 public immutable minDuration;
     uint256 public immutable maxDuration;
@@ -75,8 +77,8 @@ contract LendingContract is Ownable {
         uint256 _borrowRatio,
         uint256 _minDuration,
         uint256 _maxDuration,
-        uint256 _maxFee,
         uint256 _minFee,
+        uint256 _maxFee,
         uint256 _overdraftPercentDuration,
         uint256 _overdraftFee
         // ILendingToken _token
@@ -84,7 +86,7 @@ contract LendingContract is Ownable {
         require(_maxDuration > _minDuration, "MIN_DURATION_BIGGER_THAN_MAX");
         require(_minDuration > 0, "MIN_DURATION_ZERO");
         require(_borrowRatio > 0, "RATIO_ZERO");
-        require(_maxFee > _minFee, "MIN_FEE_BIGGER_THAN_MAX");
+        require(_maxFee >= _minFee, "MIN_FEE_BIGGER_THAN_MAX");
         require(_overdraftPercentDuration <= 100, "OVERDRAFT_DURATION_TOO_LARGE");
         require(_overdraftFee > 0, "OVERDRAFT_FEE_ZERO");
 
@@ -99,7 +101,7 @@ contract LendingContract is Ownable {
         // _token.transferOwnership(address(this));
     }
 
-    function setToken (ILendingToken _token) external onlyOwner {
+    function setToken(ILendingToken _token) external onlyOwner {
         require(address(token) == address(0), "TOKEN_ALREADY_SET");
         require(address(this) == _token.owner(), "INCORRECT_TOKEN_OWNER");
         token = _token;
@@ -111,8 +113,7 @@ contract LendingContract is Ownable {
         require(_durationDays <= maxDuration, "DURATION_TOO_LARGE");
 
         uint256 _fee = minFee +
-            (_durationDays - minDuration) / (maxDuration - minDuration) * (maxFee - minFee);
-
+            (_durationDays - minDuration) * (maxFee - minFee) / (maxDuration - minDuration);
         customers[msg.sender].amount = msg.value * borrowRatio;
         customers[msg.sender].eth = msg.value - _fee;
         customers[msg.sender].untilTime = block.timestamp + _durationDays * 1 days;
@@ -157,10 +158,12 @@ contract LendingContract is Ownable {
         token.burn(msg.sender, customers[msg.sender].amount);
         customers[msg.sender].state = UserState.RETURNED;
         emit TokensReturnSuccess(msg.sender, customers[msg.sender].amount);
+        
     }
 
-    function withdrawEth() external tokenSet onlyReturned {
+    function withdrawEth() external tokenSet onlyReturned nonReentrant {
         require(block.timestamp > customers[msg.sender].untilTime, "REQUIRED_TIME_NOT_PASSED");
+        require(customers[msg.sender].eth > 0, "NO_ETH_TO_RETRIEVE");
         address payable _customer = payable(msg.sender);
         _customer.transfer(customers[msg.sender].eth);
         emit EthReturnedSuccess(msg.sender, customers[msg.sender].eth);
@@ -246,5 +249,16 @@ contract LendingContract is Ownable {
         }
         totalIds = _newTotalIds;
         emit OverdraftFeeUpdated(totalOverdraft);
+    }
+
+    function balanceOf(address user) external view tokenSet returns(uint256) {
+        return token.balanceOf(user);
+    }
+
+    function getTotalFees() external view onlyOwner returns(uint256) {
+        return totalFees;
+    }
+    function getTotalOverdraft() external view onlyOwner returns(uint256) {
+        return totalOverdraft;
     }
 }
