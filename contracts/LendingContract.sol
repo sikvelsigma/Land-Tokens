@@ -139,9 +139,10 @@ contract LendingContract is Ownable, ReentrancyGuard {
             emit OverdraftExpired(msg.sender);
             return;
         }
+        
         uint256 _overdraftFee = 0;
         if (block.timestamp > customers[msg.sender].untilTime) {
-            _overdraftFee = overdraftFee * uint((block.timestamp - customers[msg.sender].untilTime) / 1 days);
+            _overdraftFee = uint(overdraftFee * (block.timestamp - customers[msg.sender].untilTime) / 1 days);
 
             if (_overdraftFee > customers[msg.sender].eth)  {
                 totalOverdraft += customers[msg.sender].eth;
