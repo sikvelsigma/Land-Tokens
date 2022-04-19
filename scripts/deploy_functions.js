@@ -2,12 +2,12 @@
 const { ethers } = require("hardhat")
 const { utils } = require("ethers")
 const color = require("./color")
-
+const hre = require("hardhat")
 
 async function deployToken(initMint, owner) {
     // deploy Token contract
     color.log("<g>Deploying token contract...")
-
+    let tx
     // const [owner] = await ethers.getSigners()
     const Token = await ethers.getContractFactory("LendingToken", owner)
     const token = await Token.deploy()
@@ -16,16 +16,17 @@ async function deployToken(initMint, owner) {
     color.log(`<g>Token deployed at <b>${token.address}\n`)
 
     color.log(`<g>Minting <b>${utils.formatUnits(initMint, "ether")} eth <g>tokens to owner..`)
-    await token.mint(owner.address, initMint)
+    tx = await token.mint(owner.address, initMint)
+    await tx.wait(1)
     color.log(`<g>Done\n`)
 
     return token
 }
 
-async function deployLending(data, token, owner) {
+async function deployLending(data, token, owner, verify=false) {
     // deploy Lending contract
     color.log("<g>Deploying lending contract...")
-
+    let tx
     const args = [
         data.borrowRatio,
         data.minDuration,
@@ -43,8 +44,10 @@ async function deployLending(data, token, owner) {
     color.log(`<g>Lending contract deployed at <b>${lending.address}\n`)
 
     color.log(`<g>Setting token and transfering ownership...`)
-    await token.connect(owner).transferOwnership(lending.address)
-    await lending.connect(owner).setToken(token.address)
+    tx = await token.connect(owner).transferOwnership(lending.address)
+    await tx.wait(1)
+    tx = await lending.connect(owner).setToken(token.address)
+    await tx.wait(1)
     color.log(`<g>Done\n`)
 
     return lending
@@ -148,6 +151,22 @@ async function withdrawOverdraft(contract, owner) {
     return receipt
 }
 
+async function verifyContract(address, args) {
+    color.log(`<g>Verifying contract at: <b>${address}`)
+    try {
+        await hre.run("verify:verify", {
+            address: address,
+            constructorArguments: [...args],
+          })
+        color.log(`<g>Success\n`)
+    } catch(err) {
+        color.log("<r>" + err.toString())
+        color.log(`<r>Error verifying contract\n`)
+    }
+    
+}
+
+
 module.exports = {
     deployToken,
     deployLending,
@@ -155,5 +174,6 @@ module.exports = {
     returnTokens,
     withdrawEth,
     withdrawFeeContractEth,
-    withdrawOverdraft
+    withdrawOverdraft,
+    verifyContract
 }

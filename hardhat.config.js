@@ -11,9 +11,6 @@ require("dotenv").config()
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
-const WEB3_INFURA_PROJECT_ID = process.env.WEB3_INFURA_PROJECT_ID
-const PRIVATE_KEY = process.env.PRIVATE_KEY
-const ETHERSCAN_KEY = process.env.ETHERSCAN_TOKEN
 
 module.exports = {
   solidity: {
@@ -28,8 +25,10 @@ module.exports = {
   },
   networks: {
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${WEB3_INFURA_PROJECT_ID}`,
-      accounts: [PRIVATE_KEY]
+      url: `https://rinkeby.infura.io/v3/${process.env.WEB3_INFURA_PROJECT_ID}`,
+      accounts: [process.env.PRIVATE_KEY, process.env.PRIVATE_KEY2],
+      gasPrice: 20000000000,
+      gas: 6000000,
     },
     local: {
       chainId: 1337,
@@ -47,7 +46,7 @@ module.exports = {
   //   currency: "USD"
   // },
   etherscan: {
-    apiKey: ETHERSCAN_KEY
+    apiKey: process.env.ETHERSCAN_TOKEN
   },
   mocha: {
     timeout: 1000000
