@@ -41,6 +41,8 @@ async function main() {
     await withdrawFeeContractEth(lending, owner)
     */
 
+
+    /*
     const lArgs = [
         lendingInit.borrowRatio,
         lendingInit.minDuration,
@@ -52,7 +54,9 @@ async function main() {
     ]
     await verifyContract("0x01fA8B08Ff74D1b980E279Bdb0409cbE328b3613", [])
     await verifyContract("0xFed71b0e06b84BAAB1B70E339d406fc199234Dbe", [...lArgs])
-    
+    */
+
+    await withdrawEth(lending, users[1])
 }
 
 main()
