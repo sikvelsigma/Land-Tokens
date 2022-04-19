@@ -4,13 +4,13 @@ const styles = {
     clr       : '\x1b[0m', // clear
     clear     : '\x1b[0m',
 
-    bold      : '\x1b[1m', // bold
+    bld      : '\x1b[1m', // bold
     fdd       : '\x1b[2m', // faded
-    italic    : '\x1b[3m', // italic
-    line      : '\x1b[4m', // underscore
-    s_flash   : '\x1b[5m', // slow flash
-    f_flash   : '\x1b[6m', // fast flash
-    reverse   : '\x1b[7m', // invert text and background color
+    itl       : '\x1b[3m', // italic
+    und      : '\x1b[4m', // underscore
+    sfl       : '\x1b[5m', // slow flash
+    ffl       : '\x1b[6m', // fast flash
+    inv       : '\x1b[7m', // invert text and background color
 
     // Text styles
     blk   : '\x1b[30m', // black
@@ -73,7 +73,7 @@ function decolorText(text) {
     let replacer
     for (let k in styles) {
         replacer = new RegExp(`<${k}>`, "g")
-        text = text.replace(replacer, "to")  
+        text = text.replace(replacer, "")  
     }  
     return text 
 }
@@ -90,14 +90,11 @@ function colorText(text) {
 
 function log(text) {
     console.log(colorText(text))
+    return decolorText(text)
 }
-
-
-
 
 module.exports = {
     log,
     colorText,
     decolorText,
 }
-

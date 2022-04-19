@@ -74,7 +74,7 @@ async function returnTokens(contract, user) {
         const balance = await contract.connect(user).balanceOf(user.address)
         color.log(`<g>Tokens successfully burnt, address balance: <b>${utils.formatUnits(balance, "ether")} eth\n`)
     } catch (err) {
-        color.log(`<r>${err.toString()}`)
+        color.log("<r>" + err.toString())
         color.log(`<r>Failed to return tokens\n`)
     }
 
@@ -92,7 +92,7 @@ async function withdrawEth(contract, user) {
         receipt = await tx.wait(1)
         color.log(`<g>Eth successfully returned\n`)
     } catch (err) {
-        color.log(`<r>${err.toString()}`)
+        color.log("<r>" + err.toString())
         color.log(`<r>Error returning eth\n`)
     }
 
@@ -148,47 +148,12 @@ async function withdrawOverdraft(contract, owner) {
     return receipt
 }
 
-async function main() {
-    const lendingInit = {
-        borrowRatio: 100,
-        minDuration: 1,
-        maxDuration: 10,
-        minFee: utils.parseUnits("0.1", "ether"),
-        maxFee: utils.parseUnits("0.2", "ether"),
-        overdraftPercentDuration: 50,
-        overdraftFee: utils.parseUnits("0.1", "ether")
-    }
-    const users = await ethers.getSigners()
-    const owner = users[0]
-
-    const token = await deployToken(utils.parseEther("10000"), owner)
-    const lending = await deployLending(lendingInit, token, owner)
-    
-    await borrowTokens(lending, users[1], utils.parseEther("1"), 4)
-    await borrowTokens(lending, users[2], utils.parseEther("1"), 5)
-    await borrowTokens(lending, users[3], utils.parseEther("1"), 10)
-    
-    await ethers.provider.send('evm_increaseTime', [5 * 24 * 3600])
-
-    await returnTokens(lending, users[1])
-    await returnTokens(lending, users[2])
-    await returnTokens(lending, users[3])
-
-    await ethers.provider.send('evm_increaseTime', [1 * 24 * 3600])
-
-    await withdrawEth(lending, users[1])
-    await withdrawEth(lending, users[2])
-    await withdrawEth(lending, users[3])
-
-    await withdrawFeeContractEth(lending, owner)
-    await withdrawOverdraft(lending, owner)
-
-    
+module.exports = {
+    deployToken,
+    deployLending,
+    borrowTokens,
+    returnTokens,
+    withdrawEth,
+    withdrawFeeContractEth,
+    withdrawOverdraft
 }
-
-main()
-    .then(() => process.exit(0))
-    .catch(error => {
-        console.error(error)
-        process.exit(1)
-    })
