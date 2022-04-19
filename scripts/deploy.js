@@ -1,9 +1,8 @@
 "use strict"
 const { ethers } = require("hardhat")
 const { utils } = require("ethers")
-const { ColorText } = require("./color")
+const color = require("./color")
 
-const color = new ColorText()
 
 async function deployToken(initMint, owner) {
     // deploy Token contract
