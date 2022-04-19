@@ -1,28 +1,31 @@
 "use strict"
 const { ethers } = require("hardhat")
 const { utils } = require("ethers")
+const { ColorText } = require("./color")
+
+const color = new ColorText()
 
 async function deployToken(initMint, owner) {
     // deploy Token contract
-    console.log("Deploying token contract...")
+    color.log("<g>Deploying token contract...")
 
     // const [owner] = await ethers.getSigners()
     const Token = await ethers.getContractFactory("LendingToken", owner)
     const token = await Token.deploy()
     await token.deployed()
 
-    console.log(`Token deployed at ${token.address}\n`)
+    color.log(`<g>Token deployed at <b>${token.address}\n`)
 
-    console.log(`Minting ${utils.formatUnits(initMint, "ether")} eth tokens to owner..`)
+    color.log(`<g>Minting <b>${utils.formatUnits(initMint, "ether")} eth <g>tokens to owner..`)
     await token.mint(owner.address, initMint)
-    console.log(`Done\n`)
+    color.log(`<g>Done\n`)
 
     return token
 }
 
 async function deployLending(data, token, owner) {
     // deploy Lending contract
-    console.log("Deploying lending contract...")
+    color.log("<g>Deploying lending contract...")
 
     const args = [
         data.borrowRatio,
@@ -38,31 +41,30 @@ async function deployLending(data, token, owner) {
     const lending = await Lending.deploy(...args)
     await lending.deployed()
 
-    console.log(`Lending contract deployed at ${lending.address}\n`)
+    color.log(`<g>Lending contract deployed at <b>${lending.address}\n`)
 
-    console.log(`Setting token and transfering ownership...`)
+    color.log(`<g>Setting token and transfering ownership...`)
     await token.connect(owner).transferOwnership(lending.address)
     await lending.connect(owner).setToken(token.address)
-    console.log(`Done\n`)
+    color.log(`<g>Done\n`)
 
     return lending
 }
 
 
-
 async function borrowTokens(contract, user, amount, days) {
-    console.log(`Borrowing tokens to ${user.address}`)
+    color.log(`<g>Borrowing tokens to <b>${user.address}`)
 
     const tx = await contract.connect(user).borrowTokens(days, {value: amount})
     const receipt = await tx.wait(1)
 
     const balance = await contract.connect(user).balanceOf(user.address)
-    console.log(`Tokens successfully borrowed, address balance: ${utils.formatUnits(balance, "ether")} eth\n`)
+    color.log(`<g>Tokens successfully borrowed, address balance: <b>${utils.formatUnits(balance, "ether")} eth\n`)
     return receipt
 }
 
 async function returnTokens(contract, user) {
-    console.log(`Returning tokens from ${user.address}`)
+    color.log(`<g>Returning tokens from <b>${user.address}`)
     
     let receipt
     let tx
@@ -71,10 +73,10 @@ async function returnTokens(contract, user) {
         tx = await contract.connect(user).returnTokens()
         receipt = await tx.wait(1)
         const balance = await contract.connect(user).balanceOf(user.address)
-        console.log(`Tokens successfully burnt, address balance: ${utils.formatUnits(balance, "ether")} eth\n`)
+        color.log(`<g>Tokens successfully burnt, address balance: <b>${utils.formatUnits(balance, "ether")} eth\n`)
     } catch (err) {
-        console.log(err.toString())
-        console.log(`Failed to return tokens\n`)
+        color.log(`<r>${err.toString()}`)
+        color.log(`<r>Failed to return tokens\n`)
     }
 
     
@@ -82,36 +84,36 @@ async function returnTokens(contract, user) {
 }
 
 async function withdrawEth(contract, user) {
-    console.log(`Withdrawing remaining eth of ${user.address}`)
+    color.log(`<g>Withdrawing remaining eth of <b>${user.address}`)
 
     let receipt = undefined
     
     try {
         const tx = await contract.connect(user).withdrawEth()
         receipt = await tx.wait(1)
-        console.log(`Eth successfully returned\n`)
+        color.log(`<g>Eth successfully returned\n`)
     } catch (err) {
-        console.log(err.toString())
-        console.log(`Error returning eth\n`)
+        color.log(`<r>${err.toString()}`)
+        color.log(`<r>Error returning eth\n`)
     }
 
     return receipt
 }
 
 async function withdrawFeeContractEth(contract, owner) {
-    console.log(`Withdrawing fees...`)
+    color.log(`<g>Withdrawing fees...`)
 
     const fees = await contract.connect(owner).getTotalFees()
-    console.log(`Total fees: ${utils.formatUnits(fees, "ether")} eth`)
+    color.log(`<g>Total fees: <b>${utils.formatUnits(fees, "ether")} eth`)
     
     let receipt = undefined
     
     if (fees > 0) {
         const tx = await contract.connect(owner).withdrawFeeContractEth()
         receipt = await tx.wait(1)
-        console.log(`Fees successfully withdrawn\n`)
+        color.log(`<g>Fees successfully withdrawn\n`)
     } else {
-        console.log(`No fee to withdraw\n`)
+        color.log(`<r>No fee to withdraw\n`)
     }
     
     return receipt
@@ -120,28 +122,28 @@ async function withdrawFeeContractEth(contract, owner) {
 async function withdrawOverdraft(contract, owner) {
     let tx, receipt
 
-    console.log(`Withdrawing overdraft...`)
-    console.log(`Calculating...`)
+    color.log(`<g>Withdrawing overdraft...`)
+    color.log(`<g>Calculating...`)
     tx = await contract.connect(owner).calculateOverdraft()
     receipt = await tx.wait(1)
     // console.log(receipt)
-    console.log(`Done`)
+    color.log(`<g>Done`)
     
     const fees = await contract.connect(owner).getTotalOverdraft()
-    console.log(`Total overdraft: ${utils.formatUnits(fees, "ether")} eth`)
+    color.log(`<g>Total overdraft: <b>${utils.formatUnits(fees, "ether")} eth`)
     let balance
     if (fees > 0) {
         balance = await contract.connect(owner).balanceOf(owner.address)
-        console.log(`Owner token balance: ${utils.formatUnits(balance, "ether")} eth`)
+        color.log(`<g>Owner token balance: <b>${utils.formatUnits(balance, "ether")} eth`)
 
         tx = await contract.connect(owner).withdrawOverdraftContractEth()
         receipt = await tx.wait(1)
         balance = await contract.connect(owner).balanceOf(owner.address)
 
-        console.log(`Owner token new balance: ${utils.formatUnits(balance, "ether")} eth`)    
-        console.log(`Overdraft successfully withdrawn\n`)
+        color.log(`<g>Owner token new balance: <b>${utils.formatUnits(balance, "ether")} eth`)    
+        color.log(`<g>Overdraft successfully withdrawn\n`)
     } else {
-        console.log(`No overdraft to withdraw\n`)
+        color.log(`<r>No overdraft to withdraw\n`)
     }
     
     return receipt
