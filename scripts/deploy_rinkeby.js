@@ -27,19 +27,19 @@ async function main() {
     const users = await ethers.getSigners()
     const owner = users[0]
 
-    /*
-    const token = await deployToken(utils.parseEther("100"), owner, true)
-    // const token = await ethers.getContractAt("LendingToken", "0xccaB35f09c7dBe4Dae82C2ED6F80729F5F14FD01")
-    
-    const lending = await deployLending(lendingInit, token, owner)
-    // const lending = await ethers.getContractAt("LendingContract", "0x0000")
-    
-    await borrowTokens(lending, users[1], utils.parseEther("1"), 4)
 
-    await returnTokens(lending, users[1])
+    // const token = await deployToken(utils.parseEther("100"), owner, true)
+    const token = await ethers.getContractAt("LendingToken", "0x01fA8B08Ff74D1b980E279Bdb0409cbE328b3613")
+    
+    // const lending = await deployLending(lendingInit, token, owner)
+    const lending = await ethers.getContractAt("LendingContract", "0xFed71b0e06b84BAAB1B70E339d406fc199234Dbe")
+    
+    // await borrowTokens(lending, users[1], utils.parseEther("1"), 4)
 
-    await withdrawFeeContractEth(lending, owner)
-    */
+    // await returnTokens(lending, users[1])
+
+    // await withdrawFeeContractEth(lending, owner)
+
 
 
     /*
