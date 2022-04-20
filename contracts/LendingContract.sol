@@ -252,14 +252,29 @@ contract LendingContract is Ownable, ReentrancyGuard {
         emit OverdraftFeeUpdated(totalOverdraft);
     }
 
-    function balanceOf(address user) external view tokenSet returns(uint256) {
-        return token.balanceOf(user);
-    }
-
+    // Owner view functions
     function getTotalFees() external view onlyOwner returns(uint256) {
         return totalFees;
     }
     function getTotalOverdraft() external view onlyOwner returns(uint256) {
         return totalOverdraft;
     }
+
+    // View functions for getting state of a user
+    function balanceOf(address _user) external view tokenSet returns(uint256) {
+        return token.balanceOf(_user);
+    }
+
+    function getRemainingEth(address _address) external view tokenSet returns(uint256) {
+        return(customers[_address].amount);
+    }
+
+    function getReturnTime(address _address) external view tokenSet returns(uint256) {
+        return(customers[_address].untilTime);
+    }
+
+    function getOverdraftTime(address _address) external view tokenSet returns(uint256) {
+        return(customers[_address].overdraftTime);
+    }
+
 }
