@@ -73,6 +73,7 @@ const styles = {
     wf    : '\x1b[47m',
 }
 
+// returns string without color tags
 function decolorText(text) {
     let replacer
     for (let k in styles) {
@@ -82,6 +83,7 @@ function decolorText(text) {
     return text 
 }
 
+// returns string with color keys as in styles
 function colorText(text) {
     let replacer
     for (let k in styles) {
@@ -92,6 +94,7 @@ function colorText(text) {
     return text 
 }
 
+// prints color strings to consolem retunrs decolored string
 function log(text) {
     console.log(colorText(text))
     return decolorText(text)
