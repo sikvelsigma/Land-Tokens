@@ -94,7 +94,7 @@ function colorText(text) {
     return text 
 }
 
-// prints color strings to consolem retunrs decolored string
+// prints color string to consolem retunrs decolored string
 function log(text) {
     console.log(colorText(text))
     return decolorText(text)
