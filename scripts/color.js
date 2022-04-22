@@ -1,5 +1,9 @@
 "use strict"
-
+/* Examples of colored strings:
+    "<r>Red <g>green"
+    "<bld><r>Red and bold <g>green and bold"
+    "<bld><r>Red and bold <clr><g>green"
+*/
 const styles = {
     clr       : '\x1b[0m', // clear
     clear     : '\x1b[0m',
