@@ -74,30 +74,42 @@ const styles = {
 }
 
 // returns string without color tags
-function decolorText(text) {
+function decolorText(...text) {
     let replacer
-    for (let k in styles) {
-        replacer = new RegExp(`<${k}>`, "g")
-        text = text.replace(replacer, "")  
-    }  
-    return text 
+    let res = []
+    let txt
+    for (let i = 0; i < text.length; i++) {
+        txt = text[i].toString()
+        for (let k in styles) {
+            replacer = new RegExp(`<${k}>`, "g")
+            txt = txt.replace(replacer, "")  
+        }
+        res.push(txt)
+    }
+    return res 
 }
 
 // returns string with color keys as in styles
-function colorText(text) {
+function colorText(...text) {
     let replacer
-    for (let k in styles) {
-        replacer = new RegExp(`<${k}>`, "g")
-        text = text.replace(replacer, styles[k])  
-    }  
-    text = text + styles["clr"]
-    return text 
+    let res = []
+    let txt
+    for (let i = 0; i < text.length; i++) {
+        txt = text[i].toString()
+        for (let k in styles) {
+            replacer = new RegExp(`<${k}>`, "g")
+            txt = txt.replace(replacer, styles[k])  
+        }  
+        txt = txt + styles["clr"]
+        res.push(txt)
+    }
+    return res 
 }
 
 // prints color string to console, returns decolored string
-function log(text) {
-    console.log(colorText(text))
-    return decolorText(text)
+function log(...text) {
+    console.log(...colorText(...text))
+    return decolorText(...text)
 }
 
 module.exports = {
@@ -105,3 +117,5 @@ module.exports = {
     colorText,
     decolorText,
 }
+
+
