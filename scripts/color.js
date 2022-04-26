@@ -35,9 +35,11 @@ const styles = {
     blue  : '\x1b[34m', // blue
     b     : '\x1b[34m',
 
-    prp   : '\x1b[35m', // purple
-    purple: '\x1b[35m',
-    m     : '\x1b[35m',
+    prp    : '\x1b[35m', // magenta
+    purple : '\x1b[35m',
+    mgt    : '\x1b[35m', 
+    magenta: '\x1b[35m',
+    m      : '\x1b[35m',
 
     trq   : '\x1b[36m', // cyan
     cyan  : '\x1b[36m',
@@ -63,7 +65,8 @@ const styles = {
     blue_f: '\x1b[44m', // blue
     bf    : '\x1b[44m',
 
-    prp_f : '\x1b[45m', // purple
+    prp_f : '\x1b[45m', // magenta
+    mgt_f : '\x1b[45m', 
     mf    : '\x1b[45m',
 
     trq_f : '\x1b[46m', // cyan
