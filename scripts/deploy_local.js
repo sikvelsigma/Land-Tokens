@@ -47,7 +47,6 @@ async function main() {
 
     await withdrawFeeContractEth(lending, owner)
     await withdrawOverdraft(lending, owner)
-
     
 }
 
