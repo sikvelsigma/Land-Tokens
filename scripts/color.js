@@ -73,7 +73,7 @@ const styles = {
     wf    : '\x1b[47m',
 }
 
-// returnsarray of strings without color tags
+// returns array of strings without color tags
 function decolorText(...text) {
     let replacer
     let res = []
