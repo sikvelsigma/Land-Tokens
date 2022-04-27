@@ -5,16 +5,28 @@
     "<bld><r>Red and bold <clr><g>green"
 */
 const styles = {
-    clr       : '\x1b[0m', // clear
-    clear     : '\x1b[0m',
+    clr     : '\x1b[0m', // clear
+    clear   : '\x1b[0m',
 
-    bld      : '\x1b[1m', // bold
-    fdd       : '\x1b[2m', // faded
-    itl       : '\x1b[3m', // italic
-    und      : '\x1b[4m', // underscore
-    sfl       : '\x1b[5m', // slow flash
-    ffl       : '\x1b[6m', // fast flash
-    inv       : '\x1b[7m', // invert text and background color
+    bold    : '\x1b[1m', // bold
+    bld     : '\x1b[1m',
+
+    fdd     : '\x1b[2m', // faded
+
+    italic  : '\x1b[3m', // italic
+    itl     : '\x1b[3m', 
+
+    line    : '\x1b[4m', // underscore
+    und     : '\x1b[4m', 
+
+    s_flash : '\x1b[5m', // slow flash
+    sfl     : '\x1b[5m', 
+
+    f_flash : '\x1b[6m', // fast flash
+    ffl     : '\x1b[6m', 
+
+    inversion : '\x1b[7m', // invert text and background color
+    inv       : '\x1b[7m',
 
     // Text styles
     blk   : '\x1b[30m', // black
